@@ -21,7 +21,7 @@ from skimage.measure import block_reduce
 from moviepy.editor import VideoFileClip
 
 # Global parameters 
-g_debug_plot = False
+g_debug_plot = False 
 color_space = 'HLS' # Can be RGB, HSV, LUV, HLS, YUV, YCrCb
 orient = 8  # HOG orientations
 pix_per_cell = 8 # HOG pixels per cell
@@ -43,41 +43,28 @@ def single_img_features(img, window_hog, color_space='RGB', spatial_size=(32, 32
                         spatial_feat=True, hist_feat=True, hog_feat=True):    
     #1) Define an empty list to receive features
     img_features = []
-    #2) Apply color conversion if other than 'RGB'
-    if color_space != 'RGB':
-        if color_space == 'HSV':
-            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
-        elif color_space == 'LUV':
-            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2LUV)
-        elif color_space == 'HLS':
-            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
-        elif color_space == 'YUV':
-            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YUV)
-        elif color_space == 'YCrCb':
-            feature_image = cv2.cvtColor(img, cv2.COLOR_RGB2YCrCb)
-    else: feature_image = np.copy(img)      
-    #3) Compute spatial features if flag is set
+    #2) Compute spatial features if flag is set
     if spatial_feat == True:
-        spatial_features = bin_spatial(feature_image, size=spatial_size)
+        spatial_features = bin_spatial(img, size=spatial_size)
         #4) Append features to list
         img_features.append(spatial_features)
-    #5) Compute histogram features if flag is set
+    #3) Compute histogram features if flag is set
     if hist_feat == True:
-        hist_features = color_hist(feature_image, nbins=hist_bins)
+        hist_features = color_hist(img, nbins=hist_bins)
         #6) Append features to list
         img_features.append(hist_features)
-    #7) Compute HOG features if flag is set
+    #4) Compute HOG features if flag is set
     if hog_feat == True:
         if hog_channel == 'ALL':
             hog_features = []
-            for channel in range(feature_image.shape[2]):
+            for channel in range(img.shape[2]):
                 hog_features.extend(window_hog[channel])
         else:
             hog_features = window_hog
         #8) Append features to list
         img_features.append(hog_features)
 
-    #9) Return concatenated array of features
+    #5) Return concatenated array of features
     return np.concatenate(img_features)
 
 # Define a function you will pass an image 
@@ -352,9 +339,8 @@ class VehicleDetector(object):
             self.avg_N += 1
             prev_bboxes = self.prev_bboxes
 
-        if color_space != 'RGB':
-            if color_space == 'HLS':
-                feature_image = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
+        # Convert to relevant colorspace
+        feature_image = convert_colorspace(image, color_space)
 
         # Get HOG over the entire region of interest (bottom half of image)
         img_ch_half = feature_image[img_height_half:image.shape[0]][:]
@@ -365,7 +351,7 @@ class VehicleDetector(object):
                 hog_feature, hog_image = get_hog_features(img_ch_half[:,:,channel], orient, 
                                 pix_per_cell, cell_per_block, vis=True, feature_vec=False)
                 hog_features.append(hog_feature)
-                self.__plot(hog_image)
+                self.__plot(hog_image, title='HOG_pipeline_image.png')
             else:
                 hog_features.append(get_hog_features(img_ch_half[:,:,channel], orient, 
                                 pix_per_cell, cell_per_block, vis=False, feature_vec=False))
@@ -387,8 +373,8 @@ class VehicleDetector(object):
                             (window[1][0], window[1][1]), (0,255,204), 1)
 
             self.__timestamp('start', 'get hot windows')
-            hot_windows = search_windows(image, windows, window_hog_list, self.svc, self.X_scaler, 
-                                    prev_bboxes, color_space=color_space, 
+            hot_windows = search_windows(feature_image, windows, window_hog_list, self.svc, 
+                                    self.X_scaler, prev_bboxes, color_space=color_space, 
                                     spatial_size=spatial_size, hist_bins=hist_bins, 
                                     orient=orient, pix_per_cell=pix_per_cell, 
                                     cell_per_block=cell_per_block, 
@@ -399,31 +385,23 @@ class VehicleDetector(object):
             all_windows += hot_windows
         
         # Averaged and labeled heatmaps 
+        # Heatmap:
         self.__timestamp('start', 'draw/heat windows')
         heatmap = add_heat(heatmap, all_windows)
         heatmap = avg_heat(heatmap, self.avg_heatmap, self.avg_N)
-        #self.heatmaps.append(heatmap)
-        #heatmap = sum(self.heatmaps)
         self.__plot(heatmap, cmap='hot', interpolation='nearest', force_plot=False)
 
-        #self.avg_heatmap = apply_threshold(heatmap, 1.5*len(self.heatmaps))
-        if self.avg_N == 0:
-            threshold = 1.5 #static images
-        else:
-            threshold = 1.5 #video stream
+        # Labels:
+        threshold = 1.5 #video stream
         self.avg_heatmap = apply_threshold(heatmap, threshold)
         label_struct = generate_binary_structure(2, 2)
         labels = label(self.avg_heatmap, structure=label_struct)
-#        labels = label(self.avg_heatmap)
         self.__plot(labels[0], cmap='gray', force_plot=False)
 
         # Draw bounding boxes on a copy of the image
         draw_img, self.prev_bboxes = draw_labeled_bboxes(draw_image, labels, self.prev_bboxes)
         self.__plot(draw_img)
 
-        #window_img = draw_boxes(draw_image, all_windows, color=(0, 0, 255), thick=6)                    
-        #self.__plot(window_img, grid=True)
-        
         self.__timestamp('stop', 'draw/heat windows')
         return draw_img
 

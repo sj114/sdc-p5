@@ -41,18 +41,18 @@ You're reading it!
 
 ####1. Explain how (and identify where in your code) you extracted HOG features from the training images.
 
-The code for this step is contained in lines # through # of the file called `feature_extractor.py`).  
+The code for this step is contained in lines 8 through 116 of the file called `feature_extractor.py`).  
 
-The training images comprised of the `vehicle`(GTI and KITTI) and `non-vehicle`(GTI) images provided by Udacity. There were split into training and test data with a 80:20 split using `...`. Examples of the vehicular data are as shown:
+The training images comprised of the `vehicle`(GTI and KITTI) and `non-vehicle`(GTI) images provided by Udacity. There were split into training and test data with a 80:20 split using `train_test_split` (line 178-262 of `pipeline.py`). Examples of the vehicular data are as shown:
 
 ![alt text][image_cars]
 ![alt text][image_noncars]
 
-HOG features were extracted by converting each image to a suitable colorspace and applying different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`). Below are examples of randomly chosen images from both the classes and their corresponding `skimage.hog()` output.
+HOG features were extracted by converting each image to a suitable colorspace and applying different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`). 
 
 Here is an example of a training image using the `HLS` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
 
-
+![alt text][image_hog]
 
 ####2. Explain how you settled on your final choice of HOG parameters.
 
@@ -63,25 +63,22 @@ I experimented with RGB, HSV, HLS and YUV colorspaces. I found RGB to do a good 
 After experimenting with various values from 6-9 for the orientation parameter, 8 was chosen for the best tradeoff between vehicle identification vs false positives.
 
 #####Final HOG parameters
-Color space = 'HLS' 
-HOG orientations = 8
-HOG pixels per cell = 8
-HOG cells per block = 2
-HOG channel = ALL
-Spatial binning dimensions = (16, 16)
-Number of histogram bins = 16
-
-#####Example
-![alt text][image_hog]
+* Color space = 'HLS' 
+* HOG orientations = 8
+* HOG pixels per cell = 8
+* HOG cells per block = 2
+* HOG channel = ALL
+* Spatial binning dimensions = (16, 16)
+* Number of histogram bins = 16
 
 ####3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
 
 Feature extraction was done using spatial binning (resizing to 16x16), color histogram (bins of 16) and HOG with parameters mentioned above.
 
-These features (number of features: 4344) were fed to a linear support vector machine (from `sklearn.svm`) for classification training using `svc.fit` (lines .... in `pipeline.py`). The test accuracy of the SVC was measured using `svc.score` and came out to be 98.93%. 
+These features (number of features: 4344) were fed to a linear support vector machine (from `sklearn.svm`) for classification training using `svc.fit` (lines 309-316 in `pipeline.py`). The test accuracy of the SVC was measured using `svc.score` and came out to be 98.93%. 
 
 ####HOG on pipeline
-For the images (still and video) being fed to the pipeline, it is inefficient to compute HOG for every sliding window.Instead, the HOG feature matrix is computed for the entire region of interest (bottom half of image) and for every sliding window, the corresponding HOG features are extracted from the larger HOG feature matrix. These features are then flattened and appended to the window-based spatial binning and color histogram features before being fed to the SVM's classifier.
+For the images (still and video) being fed to the pipeline, it is inefficient to compute HOG for every sliding window.Instead, the HOG feature matrix is computed for the entire region of interest (bottom half of image) and for every sliding window, the corresponding HOG features are extracted from the larger HOG feature matrix. These features are then flattened and appended to the window-based spatial binning and color histogram features before being fed to the SVM's classifier. (lines 120-176 in `pipeline.py`)
 
 ![alt text][image_hog_pipeline]
 
@@ -93,7 +90,7 @@ Since objects at the horizon appear to be smaller than objects closer to the cam
 
 The region of interest for the sliding window search is restricted to the bottom half of the image, since the top half contains artifacts (sky, trees etc.) above the horizon with no driving region. 
 
-After experimenting with sizes of 48, 64, 96, 128 etc., the final window sizes were chosen as 64, 128, 192. The windows were chosen as multiple of 64 because all images had to be resized to 64 to be fed into the classifier. Since this pipeline does NOT do HOG extraction for every sliding window, and instead computes HOG for the entire region of interest, the derivation of HOG for every sliding window......  This meant that HOG extraction for any other window size, had to be normalized. This is easier to do for an integer multiple of 64.
+After experimenting with sizes of 48, 64, 96, 128 etc., the final window sizes were chosen as 64, 128, 192. The windows were chosen as multiples of 64 because all images had to be resized to 64 to be fed into the classifier. Since this pipeline does NOT do HOG extraction for every sliding window, and instead computes HOG for the entire region of interest, this meant that HOG vector extraction for any other window size, had to be normalized. This is easier to do for an integer multiple of 64. (lines 120-176 in `pipeline.py`)
 
 The overlap factor is 75% in order to increase the probability of identifying the vehicles, in spite of the additional computational overhead. Experiments were carried out with 50% overlap as well, but this lead to diluted heatmaps making it harder to consistently classify the vehicles. 
 
@@ -103,9 +100,9 @@ Here are examples of the multi-scaled sliding windows superimposed on the camera
 
 ####2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to try to minimize false positives and reliably detect cars?
 
-The prediction of the extracted features into labels (`vehicles` or `non-vehicles`) is done using `svc.predict()`. To reduce false positives, higher weightage is given to those windows whose distance from the deciding hyper-plane is highest, i.e., `svc.decision_function() > threshold`. The threshold is chosen as 0.6 empirically. 
+The prediction of the extracted features into labels (`vehicles` or `non-vehicles`) is done using `svc.predict()`. To reduce false positives, higher weightage is given to those windows whose distance from the deciding hyper-plane is highest, i.e., `svc.decision_function() > threshold`. The threshold is chosen as 0.6 empirically. (line 110 of `pipeline.py`)
 
-In order to further reduce false positives and consolidate overlapping detections, a heatmap was implemented that accrues a weight of 1 at the pixel position for every detection. This is then thresholded at the value of 1.5 for static images and 4 for a video stream over 8 successive frames. Contiguous blobs in the heatmap are identified using `scipy.ndimage.measurements.label()`. The resulting points are then used to plot the bounding boxes.
+In order to further reduce false positives and consolidate overlapping detections, a heatmap was implemented that accrues a weight of 1 at the pixel position for every detection. This is then averaged over 10 successive frames and thresholded at the value of 1.5. Contiguous blobs in the heatmap are identified using `scipy.ndimage.measurements.label()`. The resulting points are then used to plot the bounding boxes. (lines 389-403 of `pipeline.py`)
  
 Here are some examples of heatmaps on the provided test images and corresponding labels and output images:
 
@@ -140,12 +137,17 @@ The other issue is the instability in bounding boxes. Although the cars are dete
 The current algorithm is not real-time. It processes a frame per 1.3s. This is after making optimizations such as computing HOG over the entire frame, and searching subsequent frames in the vicinity of the previously detected boxes (fresh search occurs every 10 frames).
 
 Here is the breakdown for the frame processing:
-0.33 Seconds to  get HOG
-0.36 Seconds to  get sliding windows (64)
-0.16 Seconds to  get hot windows
-0.17 Seconds to  get sliding windows (128)
-0.05 Seconds to  get hot windows
-0.12 Seconds to  get sliding windows (192)
-0.02 Seconds to  get hot windows
-0.02 Seconds to  draw/heat windows
+* 0.33 Seconds to  get HOG
+* 0.36 Seconds to  get sliding windows (64)
+* 0.16 Seconds to  get hot windows
+* 0.17 Seconds to  get sliding windows (128)
+* 0.05 Seconds to  get hot windows
+* 0.12 Seconds to  get sliding windows (192)
+* 0.02 Seconds to  get hot windows
+* 0.02 Seconds to  draw/heat windows
+= 1.23 seconds for a full frame
  
+Clearly, getting HOG and sliding windows takes the maximum amount of time. Reducing feature length and number of windows would boost performance, but this would need to be done carefully in order to ensure that it doesn't affect detections.
+
+####3. Summary
+Overall, this algorithm detects vehicles in a video stream, with some false positives and instabilities in dimensions of bounding boxes.
