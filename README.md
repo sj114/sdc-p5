@@ -22,9 +22,9 @@ The goals / steps of this project are the following:
 [image_sliding_w1]: ./output_images/sliding_output_test6.jpg
 [image_sliding_w2]: ./output_images/sliding_output_test3.jpg
 [image5]: ./plots/test1_heat_label.png
-[image6]: ./output_images/output_test6.jpg
+[image6]: ./output_images/output_test1.jpg
 [image7]: ./plots/test6_heat_label.png
-[image8]: ./output_images/output_test1.jpg
+[image8]: ./output_images/output_test6.jpg
 [video1]: ./output_video.mp4
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
@@ -63,7 +63,13 @@ I experimented with RGB, HSV, HLS and YUV colorspaces. I found RGB to do a good 
 After experimenting with various values from 6-9 for the orientation parameter, 8 was chosen for the best tradeoff between vehicle identification vs false positives.
 
 #####Final HOG parameters
-...
+Color space = 'HLS' 
+HOG orientations = 8
+HOG pixels per cell = 8
+HOG cells per block = 2
+HOG channel = ALL
+Spatial binning dimensions = (16, 16)
+Number of histogram bins = 16
 
 #####Example
 ![alt text][image_hog]
@@ -112,7 +118,7 @@ Here are some examples of heatmaps on the provided test images and corresponding
 ### Video Implementation
 
 ####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a [link to my video result](./output_video.mp4)
+Here's a [link to my video result](./output_video.mp4). The algorithm detects some cars in the opposite lanes, but also detects false positives along the edges. 
 
 
 ####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
@@ -125,6 +131,21 @@ Section 2 of the section on *Sliding Window Search* outlines the heatmap and lab
 
 ####1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+One of the biggest issues I encountered in this algorithm is the tradeoff between false positives and missing real detections. Further tuning of parameters such as colorspaces or labeling thresholds, or using a better classifier like neural networks might help improve the predictions.
+
+The other issue is the instability in bounding boxes. Although the cars are detected in most frames, the bounding box dimensions fluctuate wildly. A more robust classification will help in accurately identifying the outlines of the bounding boxes. 
 
 ####2. Performance
+
+The current algorithm is not real-time. It processes a frame per 1.3s. This is after making optimizations such as computing HOG over the entire frame, and searching subsequent frames in the vicinity of the previously detected boxes (fresh search occurs every 10 frames).
+
+Here is the breakdown for the frame processing:
+0.33 Seconds to  get HOG
+0.36 Seconds to  get sliding windows (64)
+0.16 Seconds to  get hot windows
+0.17 Seconds to  get sliding windows (128)
+0.05 Seconds to  get hot windows
+0.12 Seconds to  get sliding windows (192)
+0.02 Seconds to  get hot windows
+0.02 Seconds to  draw/heat windows
+ 
