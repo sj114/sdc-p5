@@ -196,11 +196,10 @@ def draw_labeled_bboxes(img, labels, prev_bboxes):
         # Filter out tiny boxes (unlikely to be cars)
         if abs(x2 - x1) >= 40 and abs(y2 - y1) >= 40:
             # Draw the box on the image
-            if mean[0] >= 200:
-                cv2.rectangle(img, bbox[0], bbox[1], (0,0,255), 2)
-                cv2.drawMarker(img, (np.int(mean[1]),np.int(mean[0])), 
-                                 (0,255,255), markerType=cv2.MARKER_STAR, 
-                                   markerSize=10, thickness=2, line_type=cv2.LINE_AA)
+            cv2.rectangle(img, bbox[0], bbox[1], (0,0,255), 6)
+            cv2.drawMarker(img, (np.int(mean[1]),np.int(mean[0])), 
+                             (0,255,255), markerType=cv2.MARKER_STAR, 
+                               markerSize=10, thickness=2, line_type=cv2.LINE_AA)
             new_bboxes.append((mean, bbox, 0))
 
     # Return the image
