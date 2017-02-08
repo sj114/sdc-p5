@@ -18,11 +18,13 @@ The goals / steps of this project are the following:
 [image_cars]: ./plots/vehicles.png
 [image_noncars]: ./plots/non-vehicles.png
 [image_hog]: ./plots/HOG_training_images.png
+[image_hog_pipeline]: ./plots/HOG_pipeline_image.png
 [image_sliding_w1]: ./output_images/sliding_output_test6.jpg
 [image_sliding_w2]: ./output_images/sliding_output_test3.jpg
-[image5]: ./plots/bboxes_and_heat.png
-[image6]: ./plots/labels_map.png
-[image7]: ./plots/output_bboxes.png
+[image5]: ./plots/test1_heat_label.png
+[image6]: ./output_images/output_test6.png
+[image7]: ./plots/test6_heat_label.png
+[image8]: ./output_images/output_test1.png
 [video1]: ./output_video.mp4
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
@@ -97,14 +99,14 @@ Here are examples of the multi-scaled sliding windows superimposed on the camera
 
 The prediction of the extracted features into labels (`vehicles` or `non-vehicles`) is done using `svc.predict()`. To reduce false positives, higher weightage is given to those windows whose distance from the deciding hyper-plane is highest, i.e., `svc.decision_function() > threshold`. The threshold is chosen as 0.6 empirically. 
 
-In order to further reduce false positives and consolidate overlapping detections, a heatmap was implemented that accrues a weight of 1 at the pixel position for every detection. This is then thresholded at the value of 1.5. Contiguous blobs in the heatmap are identified using `scipy.ndimage.measurements.label()`. The resulting points are then used to plot the bounding boxes.
+In order to further reduce false positives and consolidate overlapping detections, a heatmap was implemented that accrues a weight of 1 at the pixel position for every detection. This is then thresholded at the value of 1.5 for static images and 4 for a video stream over 8 successive frames. Contiguous blobs in the heatmap are identified using `scipy.ndimage.measurements.label()`. The resulting points are then used to plot the bounding boxes.
+ 
+Here are some examples of heatmaps on the provided test images and corresponding labels and output images:
 
-Here are some example images:
-
-Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
-
-
-![alt text][image_output]
+![alt text][image5]
+![alt text][image6]
+![alt text][image7]
+![alt text][image8]
 ---
 
 ### Video Implementation
@@ -115,21 +117,7 @@ Here's a [link to my video result](./project_video.mp4)
 
 ####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
-Section 2 of the section on *Sliding Window Search* outlines the heatmap and labeling methods used to filter false positives and consolidating overlapping bounding boxes.
-
-Furthermore, in case of a video stream, heatmaps are averaged over every 10 frames to smoothen vehicle detection. 
-
-### Here are six frames and their corresponding heatmaps:
-
-![alt text][image5]
-
-### Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:
-![alt text][image6]
-
-### Here the resulting bounding boxes are drawn onto the last frame in the series:
-![alt text][image7]
-
-
+Section 2 of the section on *Sliding Window Search* outlines the heatmap and labeling methods used to filter false positives and consolidating overlapping bounding boxes, including details for the video pipeline.
 
 ---
 
@@ -139,3 +127,4 @@ Furthermore, in case of a video stream, heatmaps are averaged over every 10 fram
 
 Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
 
+####2. Performance
