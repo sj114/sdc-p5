@@ -22,9 +22,9 @@ The goals / steps of this project are the following:
 [image_sliding_w1]: ./output_images/sliding_output_test6.jpg
 [image_sliding_w2]: ./output_images/sliding_output_test3.jpg
 [image5]: ./plots/test1_heat_label.png
-[image6]: ./output_images/output_test6.png
+[image6]: ./output_images/output_test6.jpg
 [image7]: ./plots/test6_heat_label.png
-[image8]: ./output_images/output_test1.png
+[image8]: ./output_images/output_test1.jpg
 [video1]: ./output_video.mp4
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
@@ -112,7 +112,7 @@ Here are some examples of heatmaps on the provided test images and corresponding
 ### Video Implementation
 
 ####1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (somewhat wobbly or unstable bounding boxes are ok as long as you are identifying the vehicles most of the time with minimal false positives.)
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](./output_video.mp4)
 
 
 ####2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
